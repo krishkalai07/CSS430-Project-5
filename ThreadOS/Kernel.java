@@ -160,12 +160,19 @@ public class Kernel
                         return ERROR;
                      case STDOUT:
                         System.out.print( (String)args );
-                        break;
+                        return OK;
                      case STDERR:
                         System.err.print( (String)args );
-                        break;
+                        return OK;
                   }
-                  return OK;
+                  if ((myTcb = scheduler.getMyTcb()) != null) {
+                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     if (ftEnt != null) {
+                        return fs.write(ftEnt, (byte[] args));
+                     }
+                  }
+                  return ERROR;
+                  
                case CREAD:   // to be implemented in assignment 4
                   return cache.read( param, ( byte[] )args ) ? OK : ERROR;
                case CWRITE:  // to be implemented in assignment 4
@@ -177,17 +184,45 @@ public class Kernel
                   cache.flush( );
                   return OK;
                case OPEN:    // to be implemented in project
-                  return OK;
+                  if ((myTcb = scheduler.getMyTcb()) != null) {
+                     String[] s = (String[]) args;
+                     return myTcb.getFd(fs.open(s[0], s[1]));
+                  } else {
+                     return ERROR;
+                  }
+
                case CLOSE:   // to be implemented in project
+                  if ((myTcb = scheduler.getMyTcb()) != null) {
+                     FileTableEntry ftEnt == myTcb.getFtEnt(param);
+                     if (ftEnt == null || !fs.close(ftEnt)) {
+                        return ERROR;
+                     }
+                  }
                   return OK;
+
                case SIZE:    // to be implemented in project
-                  return OK;
+                  if ((myTcb = scheduler.getMyTcb()) != null) {
+                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     if (ftEnt != null) {
+                        return fs.fsize(ftEnt);
+                     }
+                  }
+                  return ERROR;
+
                case SEEK:    // to be implemented in project
-                  return OK;
+                  if((myTcb = scheduler.getMyTcb()) != null) {
+                     int[] seekArgs = (int[]) args;
+                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     if (ftEnt != null) {
+                        return fs.seek(ftEnt, seekArgs[0], seekArgs[1]);
+                     }
+                  }
+                  return ERROR;
+
                case FORMAT:  // to be implemented in project
-                  return OK;
+                  return (fs.format(param))? OK : ERROR;
                case DELETE:  // to be implemented in project
-                  return OK;
+                  return (fs.delete((String)args))? OK: ERROR;
             }
             return ERROR;
          case INTERRUPT_DISK: // Disk interrupts
