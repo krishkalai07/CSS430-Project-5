@@ -1,5 +1,3 @@
-import java.io.*;
-
 public class Boot
 {
     static final int OK = 0;
