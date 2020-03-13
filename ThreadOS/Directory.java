@@ -18,7 +18,6 @@ public class Directory {
     // assumes data[] received directory information from disk
     // initializes the Directory instance with this data[]
     public int bytes2directory( byte data[] ) {
-        //[0,0,0,4,/,0,0,0,4,i,n,i,t,...]
         for (int offset = 0, findex = 0; offset < data.length; findex++) {
 
             int fnameSize = SysLib.bytes2int(data, offset);
@@ -53,17 +52,22 @@ public class Directory {
    }
 
    public short ialloc( String filename ) {
-    // filename is the one of a file to be created.
-    // allocates a new inode number for this filename
+        // filename is the one of a file to be created.
+        // allocates a new inode number for this filename
+        return 0;
     }
 
     public boolean ifree( short iNumber ) {
         // deallocates this inumber (inode number)
         // the corresponding file will be deleted.
+        return true;
     }
 
+    // -1 if it is not there
     public short namei( String filename ) {
         // returns the inumber corresponding to this filename
+        return 0;
+
     }
 
 }
