@@ -168,7 +168,7 @@ public class Kernel
                   if ((myTcb = scheduler.getMyTcb()) != null) {
                      FileTableEntry ftEnt = myTcb.getFtEnt(param);
                      if (ftEnt != null) {
-                        return fs.write(ftEnt, (byte[] args));
+                        return fs.write(ftEnt, (byte[])args);
                      }
                   }
                   return ERROR;
@@ -193,7 +193,7 @@ public class Kernel
 
                case CLOSE:   // to be implemented in project
                   if ((myTcb = scheduler.getMyTcb()) != null) {
-                     FileTableEntry ftEnt == myTcb.getFtEnt(param);
+                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
                      if (ftEnt == null || !fs.close(ftEnt)) {
                         return ERROR;
                      }
