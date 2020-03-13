@@ -60,14 +60,23 @@ public class Directory {
     public boolean ifree( short iNumber ) {
         // deallocates this inumber (inode number)
         // the corresponding file will be deleted.
-        return true;
+        if (fsize[iNumber] > 0) { // FIXME: need (iNumber < MAX_CHARS)? cant it be (iNumber < fisze.length)
+            fsize[iNumber] = 0;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // -1 if it is not there
     public short namei( String filename ) {
         // returns the inumber corresponding to this filename
-        return 0;
-
+        for (short i = 0; i < fsize.length; i++) {
+            if (filename.equals(new String(fnames[i]))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 }
