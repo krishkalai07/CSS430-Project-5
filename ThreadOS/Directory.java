@@ -54,13 +54,27 @@ public class Directory {
    public short ialloc( String filename ) {
         // filename is the one of a file to be created.
         // allocates a new inode number for this filename
-        return 0;
+
+        // finds the index of fsize where it is zero (empty) and assign to it
+        for (short i = 0; i < fsize.length; i++) {
+            if (fsize[i] == 0) {
+                if (filename.length() > maxChars) {
+                    fsize[i] = maxChars;
+                    filename = filename.substring(0, maxChars);     // FIXME: I cut the string if it is longer than maxChars
+                } else {
+                    fsize[i] = filename.length();
+                }
+                fnames[i] = filename.toCharArray();
+                return i;
+            }
+        }
+        return -1;  // ERROR
     }
 
     public boolean ifree( short iNumber ) {
         // deallocates this inumber (inode number)
         // the corresponding file will be deleted.
-        if (fsize[iNumber] > 0) { // FIXME: need (iNumber < MAX_CHARS)? cant it be (iNumber < fisze.length)
+        if (iNumber < fsize.length && fsize[iNumber] > 0) { // FIXME: need (iNumber < MAX_CHARS)? cant it be (iNumber < fisze.length)
             fsize[iNumber] = 0;
             return true;
         } else {
@@ -76,7 +90,7 @@ public class Directory {
                 return i;
             }
         }
-        return -1;
+        return -1;      // ERROR
     }
 
 }
