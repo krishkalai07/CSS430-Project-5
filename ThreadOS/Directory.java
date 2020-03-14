@@ -5,18 +5,31 @@ public class Directory {
    private int fsize[];        // each element stores a different file size.
    private char fnames[][];    // each element stores a different file name.
 
-    public Directory( int maxInumber ) { // directory constructor
-        fsize = new int[maxInumber];     // maxInumber = max files
+    /**
+     * Constructs a directory with maxInumber files, and initializes root.
+     * 
+     * @param maxInumber The maximum number of files in the directory
+     */
+    public Directory( int maxInumber ) {
+        fsize = new int[maxInumber];
         for ( int i = 0; i < maxInumber; i++ ) 
-            fsize[i] = 0;                 // all file size initialized to 0
+            fsize[i] = 0;
         fnames = new char[maxInumber][maxChars];
-        String root = "/";                // entry(inode) 0 is "/"
-        fsize[0] = root.length( );        // fsize[0] is the size of "/".
-        root.getChars( 0, fsize[0], fnames[0], 0 ); // fnames[0] includes "/"
+        String root = "/";
+        fsize[0] = root.length();
+        root.getChars( 0, fsize[0], fnames[0], 0 );
     }
 
     // assumes data[] received directory information from disk
     // initializes the Directory instance with this data[]
+    /**
+     * Converts data received from disk to this directory object.
+     * The data is formatted as [filename_size * 4, file_name ** filename_size, ...]. 
+     * The data does not have a sentinel. Instead, the entire array is read.
+     * 
+     * @param data The data read from disk.
+     * @return unkown
+     */
     public int bytes2directory( byte data[] ) {
         for (int offset = 0, findex = 0; offset < data.length; findex++) {
 
@@ -24,19 +37,19 @@ public class Directory {
             offset += 4;
             fnames[findex] = new char[fnameSize];
             for (int i = 0; i < fnameSize; i++) {
-                fnames[findex][i] = (char)data[offset + i];// read in the filename
+                fnames[findex][i] = (char)data[offset + i];
             }
             offset += fnameSize;
         }
         return 0; // FIXME: check what it should return
     }
 
-   public byte[] directory2bytes() {
-        // converts and return Directory information into a plain byte array
-        // this byte array will be written back to disk
-        // note: only meaningfull directory information should be converted
-        // into bytes.
-
+    /**
+     * Converts this directory object into a byte array to be written to disk.
+     * 
+     * @return the directory data written to disk.
+     */
+    public byte[] directory2bytes() {
         byte[] barr = new byte[512]; 
         int offset = 0;
 
@@ -51,16 +64,20 @@ public class Directory {
         return barr;
    }
 
+   /**
+    * Creates a file with the name filename and assigns an iNumber.
+    * Filename's length will be trimmed to maxChars if it exceeds it.
+    *
+    * @param filename the name of the file
+    * @return the iNumber of this file. -1 if there is no available space
+    */
    public short ialloc( String filename ) {
-        // filename is the one of a file to be created.
-        // allocates a new inode number for this filename
-
         // finds the index of fsize where it is zero (empty) and assign to it
         for (short i = 0; i < fsize.length; i++) {
             if (fsize[i] == 0) {
                 if (filename.length() > maxChars) {
                     fsize[i] = maxChars;
-                    filename = filename.substring(0, maxChars);     // FIXME: I cut the string if it is longer than maxChars
+                    filename = filename.substring(0, maxChars);
                 } else {
                     fsize[i] = filename.length();
                 }
@@ -71,10 +88,14 @@ public class Directory {
         return -1;  // ERROR
     }
 
+    /**
+     * Deallocates the iNumber.
+     * 
+     * @param iNumber The iNumber of the file to be deallocated.
+     * @return true if the file has been deallocated, false otherwise.
+     */
     public boolean ifree( short iNumber ) {
-        // deallocates this inumber (inode number)
-        // the corresponding file will be deleted.
-        if (iNumber < fsize.length && fsize[iNumber] > 0) { // FIXME: need (iNumber < MAX_CHARS)? cant it be (iNumber < fisze.length)
+        if (iNumber >= 0 && iNumber < fsize.length && fsize[iNumber] > 0) {
             fsize[iNumber] = 0;
             return true;
         } else {
@@ -82,15 +103,18 @@ public class Directory {
         }
     }
 
-    // -1 if it is not there
+    /**
+     * Searches for the file with the matching fileNames.
+     * 
+     * @param filename The filename to search for
+     * @return the iNumber of the corresponding file, or -1 if not found.
+     */
     public short namei( String filename ) {
-        // returns the inumber corresponding to this filename
         for (short i = 0; i < fsize.length; i++) {
             if (filename.equals(new String(fnames[i]))) {
                 return i;
             }
         }
-        return -1;      // ERROR
+        return -1;
     }
-
 }
