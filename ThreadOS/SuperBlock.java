@@ -20,4 +20,27 @@ public class SuperBlock {
       }
    }
 
+   public void sync(){ 
+      byte[] superBlock = new byte[Disk.blockSize];
+      SysLib.int2bytes(totalBlocks, superBlock, 0);
+      SysLib.int2bytes(totalInodes, superBlock, 4);
+      SysLib.int2bytes(freeList, superBlock, 8);
+      SysLib.rawwrite(0, superBlock);
+  }
+
+   // write super block to disk
+   /** 
+    * 
+    * @param fileCount number of files to be stored
+    */
+   public void format(int fileCount) { 
+      if (fileCount <= 0) {     
+         totalBlocks = 1;
+         totalInodes = 16;
+      } else {
+         totalInodes = fileCount;
+         totalBlocks = totalInodes / 16;
+      }
+      freeList = 1;
+   }
 }
