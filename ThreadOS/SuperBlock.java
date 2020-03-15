@@ -4,21 +4,19 @@ public class SuperBlock {
    public int freeList;    // the block number of the free list's head
   
    public SuperBlock( int diskSize ) {
-      byte[] blockInfo = new byte[512];
+      byte[] superBlock = new byte[512];
+      SysLib.rawread(0, superBlock);
+      totalBlocks = SysLib.bytes2int(superBlock, 0);
+      totalInodes = SysLib.bytes2int(superBlock, 4);
+      freeList = SysLib.bytes2int(superBlock, 8);
 
-      SysLib.rawread(0, blockInfo);
-
-      totalBlocks = SysLib.bytes2int(blockInfo, 0);
-      if (totalBlocks == 0) { // disk does not contain information
-         // compute values
-         // write to disk
-         // totalBlocks = 
-          
-      } else { // disk already contains the information
-         totalInodes = SysLib.bytes2int(blockInfo, 4);
-         freeList = SysLib.bytes2int(blockInfo, 8);
+      // Validate disk contents
+      if ((totalBlocks != diskSize) || (totalInodes <= 0) || (freeList < 2)) {
+         // Disk data is invalid
+         totalInodes = SysLib.bytes2int(superBlock, 4);
+         freeList = SysLib.bytes2int(superBlock, 8);
       }
-   }
+  }
 
    public void sync(){ 
       byte[] superBlock = new byte[Disk.blockSize];
