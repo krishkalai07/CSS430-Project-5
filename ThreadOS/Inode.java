@@ -31,18 +31,9 @@ public class Inode {
 
         if (SysLib.rawread(blockNumber, barr) == Kernel.ERROR) {
             SysLib.cerr("Failed to rawread for Inode");
-            throw new RuntimeException();
+            throw new IllegalArgumentException("donghee makes me sleepy");
         }
-
-        // the spot we need to start from is (inodeIndex * 32) to (indodeIndex * 32 + 31)
-        byte[] iNodeData = new byte[iNodeSize];
-        System.arraycopy(barr, iNodeIndex * 32, iNodeData, 0, 32);
-
-        length = SysLib.bytes2int(barr, 0);
-        count = SysLib.bytes2short(barr, 4);
-        flag = SysLib.bytes2short(barr, 6);
-
-        int offset = 8;
+        int offset = 0;
         for (int i = 0; i < directSize; i++, offset += 2) {
             direct[i] = SysLib.bytes2short(barr, offset);
         }
