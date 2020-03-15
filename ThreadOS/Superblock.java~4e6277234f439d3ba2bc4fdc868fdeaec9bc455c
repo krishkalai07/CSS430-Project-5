@@ -11,7 +11,7 @@ public class SuperBlock {
       freeList = SysLib.bytes2int(superBlock, 8);
 
       // Validate disk contents
-      if ((totalBlocks != diskSize) || (totalInodes <= 0) || (freeList < 2)) {
+      if (totalBlocks != diskSize || totalInodes == 0 || freeList < 1) {
          // Disk data is invalid
          totalInodes = SysLib.bytes2int(superBlock, 4);
          freeList = SysLib.bytes2int(superBlock, 8);
