@@ -69,6 +69,7 @@ public class Kernel
       TCB myTcb;
       switch( irq ) {
          case INTERRUPT_SOFTWARE: // System calls
+            //System.out.println("kernel::software");
             switch( cmd ) { 
                case BOOT:
                   // instantiate and start a scheduler
@@ -132,6 +133,7 @@ public class Kernel
                      ioQueue.enqueueAndSleep( COND_DISK_FIN );
                   return OK;
                case READ:
+                  // System.out.println("kernel::software::read " + param);
                   switch ( param ) {
                      case STDIN:
                         try {
@@ -156,6 +158,13 @@ public class Kernel
                         System.out.println( "threaOS: caused read errors" );
                         return ERROR;
                   }
+                  if ((myTcb = scheduler.getMyTcb()) != null) {
+                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
+
+                     if (ftEnt != null) {
+                        return fs.read(ftEnt, (byte[])args);
+                     }
+                  }
                   // return FileSystem.read( param, byte args[] );
                   return ERROR;
                case WRITE:
@@ -172,10 +181,12 @@ public class Kernel
                   }
                   if ((myTcb = scheduler.getMyTcb()) != null) {
                      FileTableEntry ftEnt = myTcb.getFtEnt(param);
+
                      if (ftEnt != null) {
                         return fs.write(ftEnt, (byte[])args);
                      }
                   }
+
                   return ERROR;
 
                case CREAD:   // to be implemented in assignment 4
@@ -191,7 +202,8 @@ public class Kernel
                case OPEN:    // to be implemented in project
                   if ((myTcb = scheduler.getMyTcb()) != null) {
                      String[] s = (String[]) args;
-                     return myTcb.getFd(fs.open(s[0], s[1]));
+                     int fd = myTcb.getFd(fs.open(s[0], s[1]));
+                     return fd;
                   } else {
                      return ERROR;
                   }

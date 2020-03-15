@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class Directory {
    private static int maxChars = 30; // max characters of each file name
 
@@ -14,9 +16,10 @@ public class Directory {
         fsize = new int[maxInumber];
         for ( int i = 0; i < maxInumber; i++ ) 
             fsize[i] = 0;
-        fnames = new char[maxInumber][maxChars];
+        fnames = new char[maxInumber][0];
         String root = "/";
         fsize[0] = root.length();
+        fnames[0] = new char[1];
         root.getChars( 0, fsize[0], fnames[0], 0 );
     }
 
@@ -110,7 +113,9 @@ public class Directory {
      * @return the iNumber of the corresponding file, or -1 if not found.
      */
     public short namei( String filename ) {
+        //System.out.println("target: " + filename);
         for (short i = 0; i < fsize.length; i++) {
+            //System.out.println(i + " " + fnames[i].length);
             if (filename.equals(new String(fnames[i]))) {
                 return i;
             }

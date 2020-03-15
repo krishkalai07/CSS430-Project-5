@@ -96,6 +96,7 @@ public class SysLib {
     }
 
     public static int read(int fd, byte buffer[]) {
+        System.out.println("syslib::read");
         return Kernel.interrupt(Kernel.INTERRUPT_SOFTWARE,
                                 Kernel.READ,
                                 fd,

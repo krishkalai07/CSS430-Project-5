@@ -15,6 +15,7 @@ public class FileSystem {
  
        // directory reconstruction
        FileTableEntry dirEnt = open("/", "r");
+       
        int dirSize = fsize(dirEnt);
        if (dirSize > 0) {
           byte[] dirData = new byte[dirSize];
@@ -57,6 +58,7 @@ public class FileSystem {
     FileTableEntry open(String filename, String mode) {
         FileTableEntry fte = filetable.falloc(filename, mode);
         if (fte == null) {
+            //System.out.println("cat will slap a fireplace if i see this");
             return null;
         }
         return fte;
@@ -66,8 +68,8 @@ public class FileSystem {
         // Closes the file corresponding to fd, commits all file transactions on this file, 
         // and unregisters fd from the user file descriptor table of the calling thread's TCB. 
         // The return value is 0 in success, otherwise -1.
+        filetable.ffree(ftEnt);
         ftEnt.inode.count--;
-        // FIXME: is this all we do in close? o we need to kick out a TCB (A.E.) or smth or this out of TCB?
         return true;
     }
 
@@ -76,23 +78,33 @@ public class FileSystem {
     }
 
     int read(FileTableEntry ftEnt, byte[] buffer) {
+        // System.out.println("p1");
         int temp = ftEnt.seekPtr;
-        int index = ftEnt.seekPtr / 512;    // index of a direct/indirect array–
+        // System.out.println("p2");
+        // int index = ftEnt.seekPtr / 512;    // index of a direct/indirect array–
+        // System.out.println("p3");
         Inode inode = ftEnt.inode;
+        // System.out.println("p4");
         while (temp > 512) {
             short inumber = inode.indirect;
             inode = new Inode(inumber);
             temp = temp / 512;
         }
+        // System.out.println("p5");
         int blockNumber = temp;
 
+        // System.out.println("p6");
         byte[] readFromDisk = new byte[512];
+        // System.out.println("p7");
         if (SysLib.rawread(inode.direct[blockNumber], readFromDisk) == -1) {
+            System.out.println("the cat stopped working");
             return -1;
         }
+        // System.out.println("p8");
         System.arraycopy(readFromDisk, temp, buffer, 0, buffer.length);
-        
-        return 0;
+        ftEnt.seekPtr += buffer.length;
+        // System.out.println("p9");
+        return buffer.length;
     }
 
     /**
@@ -107,16 +119,29 @@ public class FileSystem {
     int write(FileTableEntry ftEnt, byte[] buffer) {
         byte[] readFromDisk = new byte[512];
 
+        if (ftEnt.inode.flag == 0) {
+            System.out.println(ftEnt.count);
+            return 0;
+        }
+
         Inode inode = ftEnt.inode;
         int blockIndex = ftEnt.seekPtr / 512;
         if (blockIndex < ftEnt.inode.direct.length) {       // direct
+            System.out.println("first");
+
             int blockNumber = inode.direct[blockIndex];
             SysLib.rawread(blockNumber, readFromDisk);
             System.arraycopy(buffer, 0, readFromDisk, ftEnt.seekPtr % 512, buffer.length);  // TODO: assuming that the data does not go out of the block
-
             SysLib.rawwrite(blockNumber, readFromDisk);
+            // System.out.println("end");
+            ftEnt.seekPtr += buffer.length;
+
+            return buffer.length; //FIXME: No block switch or indirect
+
         } else {                                            // indirect
             //TODO: FIXME: hi hi hi
+            System.out.println("hi hi hi");
+
         }
 
         return 0;

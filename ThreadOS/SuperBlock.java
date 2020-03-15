@@ -13,8 +13,8 @@ public class SuperBlock {
       // Validate disk contents
       if (totalBlocks != diskSize || totalInodes == 0 || freeList < 1) {
          // Disk data is invalid
-         totalInodes = SysLib.bytes2int(superBlock, 4);
-         freeList = SysLib.bytes2int(superBlock, 8);
+         totalInodes = 16;
+         freeList = 1;
       }
   }
 
@@ -32,13 +32,10 @@ public class SuperBlock {
     * @param fileCount number of files to be stored
     */
    public void format(int fileCount) { 
-      if (fileCount <= 0) {     
-         totalBlocks = 1;
-         totalInodes = 16;
-      } else {
-         totalInodes = fileCount;
-         totalBlocks = totalInodes / 16;
-      }
-      freeList = 1;
+      totalBlocks = 1000;
+      totalInodes = fileCount;
+      freeList = fileCount / 16 +  1;
+
+      sync();
    }
 }

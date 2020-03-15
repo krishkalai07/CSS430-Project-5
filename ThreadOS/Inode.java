@@ -64,7 +64,7 @@ public class Inode {
         }
 
         SysLib.short2bytes(indirect, barr, offset);
-        System.arraycopy(barr, 0, iNodeData, iNodeIndex * 32, 32);
+        System.arraycopy(iNodeData, 0, barr, iNodeIndex * 32, 32);
         SysLib.rawwrite(blockNumber, barr);
 
         return 0; //FIXME: what does this actually return?
