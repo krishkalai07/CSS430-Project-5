@@ -30,10 +30,10 @@ class Test5 extends Thread {
       SysLib.cout("Correct behavior of reading a few bytes.........2\n");
     if ( test6( ) ) // append buf[32] to "css430"
       SysLib.cout("Correct behavior of appending a few bytes.......1\n");
-    // if ( test7( ) ) // seek and read from "css430"
-    //   SysLib.cout("Correct behavior of seeking in a small file.....1\n");
-    // if ( test8( ) ) // open "css430" with "w+"
-    //   SysLib.cout("Correct behavior of read/writing a small file.0.5\n");
+    if ( test7( ) ) // seek and read from "css430"
+      SysLib.cout("Correct behavior of seeking in a small file.....1\n");
+    if ( test8( ) ) // open "css430" with "w+"
+      SysLib.cout("Correct behavior of read/writing a small file.0.5\n");
 
     // test9( );        // open "bothell" with "w+"
     // if ( test10( ) ) // write buf[512 * 13]
@@ -197,6 +197,8 @@ class Test5 extends Thread {
     }
     byte[] tmpBuf = new byte[2];
     size = SysLib.read( fd, tmpBuf );
+    
+    //
     if ( tmpBuf[0] != ( byte )10 ) {
       SysLib.cout( "seek(fd,10,0) contents " + tmpBuf[0] + "(wrong\n" );
       SysLib.close( fd );

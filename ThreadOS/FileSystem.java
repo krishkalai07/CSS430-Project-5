@@ -56,20 +56,18 @@ public class FileSystem {
 
 
     FileTableEntry open(String filename, String mode) {
-        FileTableEntry fte = filetable.falloc(filename, mode);
-        if (fte == null) {
-            //System.out.println("cat will slap a fireplace if i see this");
-            return null;
-        }
-        return fte;
+        System.out.println("open: " + mode);
+        return filetable.falloc(filename, mode);
     }
 
     boolean close(FileTableEntry ftEnt) {
         // Closes the file corresponding to fd, commits all file transactions on this file, 
         // and unregisters fd from the user file descriptor table of the calling thread's TCB. 
         // The return value is 0 in success, otherwise -1.
-        filetable.ffree(ftEnt);
+        //filetable.ffree(ftEnt);
+        ftEnt.inode.flag = 0;
         ftEnt.inode.count--;
+        System.out.println("close::seek: " + ftEnt.seekPtr);
         return true;
     }
 
@@ -101,8 +99,14 @@ public class FileSystem {
             return -1;
         }
         // System.out.println("p8");
+        // System.out.println("seekptr bfr: " + ftEnt.seekPtr);
+        System.out.println(java.util.Arrays.toString(readFromDisk));
+        // System.out.println(java.util.Arrays.toString(buffer));
         System.arraycopy(readFromDisk, temp, buffer, 0, buffer.length);
         ftEnt.seekPtr += buffer.length;
+        // System.out.println("seekptr aft: " + ftEnt.seekPtr);
+        System.out.println(java.util.Arrays.toString(readFromDisk));
+        // System.out.println(java.util.Arrays.toString(buffer));
         // System.out.println("p9");
         return buffer.length;
     }
@@ -127,7 +131,7 @@ public class FileSystem {
         Inode inode = ftEnt.inode;
         int blockIndex = ftEnt.seekPtr / 512;
         if (blockIndex < ftEnt.inode.direct.length) {       // direct
-            System.out.println("first");
+            //System.out.println("first");
 
             int blockNumber = inode.direct[blockIndex];
             SysLib.rawread(blockNumber, readFromDisk);
@@ -135,6 +139,7 @@ public class FileSystem {
             SysLib.rawwrite(blockNumber, readFromDisk);
             // System.out.println("end");
             ftEnt.seekPtr += buffer.length;
+            ftEnt.inode.length += buffer.length;
 
             return buffer.length; //FIXME: No block switch or indirect
 
@@ -177,7 +182,8 @@ public class FileSystem {
      * If the user attempts to set the pointer to beyond the file size, you must set the seek pointer to the end of the file. The offset loction of the seek pointer in the file is returned from the call to seek.
      */
     int seek(FileTableEntry ftEnt, int offset, int whence) {
-        
+        System.out.println("sawfwfwfwefef");
+
         switch (whence) {
             case SEEK_SET:
                 ftEnt.seekPtr = 0;
@@ -197,7 +203,8 @@ public class FileSystem {
         } else if (ftEnt.seekPtr > ftEnt.inode.length) {
             ftEnt.seekPtr = ftEnt.inode.length;
         }
-        return 0;
+        System.out.println("seek: " + ftEnt.seekPtr);
+        return ftEnt.seekPtr;
     }
  }
  

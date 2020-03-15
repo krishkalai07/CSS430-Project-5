@@ -26,6 +26,7 @@ public class FileTable {
 
       //allocate/retrieve and register the corresponding inode using dir
       if (fte == null) {
+         System.out.println("i am creating the file");
          //System.out.println("kittens want to see this");
          // allocate a new file (structure) table entry for this file name
          inumber = dir.ialloc(filename);     // FIXME: make use of free list
@@ -34,26 +35,30 @@ public class FileTable {
          fte = new FileTableEntry(inode, inumber, mode);
          inode.count++; //thread usage count
          // immediately write back this inode to the disk
-         System.out.println("!!!inumber: " + inumber);
+         //System.out.println("!!!inumber: " + inumber);
          inode.toDisk(inumber);
          table.add(fte);
       }
       else {
          fte.inode.count++; //thread usage count
          fte.inode.flag = 1;
-         switch(mode) {
-            case "r":
-            case "w":
-            case "w+":
-               fte.seekPtr = 0;
-               break;
-            case "a":
-               fte.seekPtr = fte.inode.length;
-               break;
-            default:
-               break;
-         }
          fte.inode.toDisk(inumber);
+      }
+
+      System.out.println("falloc::mode: " + mode);
+      switch(mode) {
+         case "r":
+         case "w":
+         case "w+":
+            fte.seekPtr = 0;
+            break;
+         case "a":
+            System.out.println("i have found and appended to the file");
+            System.out.println(fte.inode.length);
+            fte.seekPtr = fte.inode.length;
+            break;
+         default:
+            break;
       }
 
       //return a reference to this file (structure) table entry

@@ -214,6 +214,7 @@ public class Kernel
                      if (ftEnt == null || !fs.close(ftEnt)) {
                         return ERROR;
                      }
+                     System.out.println("kernel::seek: " + ftEnt.seekPtr);
                   }
                   return OK;
 
