@@ -48,12 +48,26 @@ public class FileTable {
     */
    public synchronized boolean ffree(FileTableEntry fte) {
       //save the corresponding inode to the disk
-      fte.inode.toDisk(fte.iNumber);
-
       //free this file table entry.
       //return true if this file table entry found in my table
       for (int i = 0; i < table.size(); i++) {
          if (table.get(i).iNumber == fte.iNumber) {
+            fte.inode.toDisk(fte.iNumber);
+            table.remove(i);
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public synchronized boolean ffree(short iNumber) {
+      //save the corresponding inode to the disk
+      //free this file table entry.
+      //return true if this file table entry found in my table
+      
+      for (int i = 0; i < table.size(); i++) {
+         if (table.get(i).iNumber == iNumber) {
+            table.get(i).inode.toDisk(iNumber);
             table.remove(i);
             return true;
          }

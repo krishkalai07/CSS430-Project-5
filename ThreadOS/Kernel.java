@@ -54,6 +54,9 @@ public class Kernel
    private static SyncQueue waitQueue;  // for threads to wait for their child
    private static SyncQueue ioQueue;    // I/O queue
 
+   // File System
+   private static FileSystem fs;
+
    private final static int COND_DISK_REQ = 1; // wait condition 
    private final static int COND_DISK_FIN = 2; // wait condition
 
@@ -82,6 +85,8 @@ public class Kernel
                   // instantiate synchronized queues
                   ioQueue = new SyncQueue( );
                   waitQueue = new SyncQueue( scheduler.getMaxThreads( ) );
+
+                  fs = new FileSystem(512 * 1000);
                   return OK;
                case EXEC:
                   return sysExec( ( String[] )args );
