@@ -40,11 +40,24 @@ public class FileTable {
       return fte;
    }
 
-   public synchronized boolean ffree( FileTableEntry e ) {
-      //receive a file table entry reference
+   /**
+    * 
+    * @param e a file table entry reference to be freed
+    * @return true if it has been freed successfully
+    */
+   public synchronized boolean ffree(FileTableEntry fte) {
       //save the corresponding inode to the disk
+      fte.inode.toDisk(fte.iNumber);
+
       //free this file table entry.
       //return true if this file table entry found in my table
+      for (int i = 0; i < table.size(); i++) {
+         if (table.get(i).iNumber == fte.iNumber) {
+            table.remove(i);
+            return true;
+         }
+      }
+      return false;
    }
 
    public synchronized boolean fempty( ) {
