@@ -56,7 +56,10 @@ public class FileSystem {
 
     FileTableEntry open(String filename, String mode) {
         FileTableEntry fte = filetable.falloc(filename, mode);
-
+        if (fte == null) {
+            return null;
+        }
+        
         return fte;
       
     }

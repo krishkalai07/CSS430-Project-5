@@ -34,6 +34,7 @@ public class FileTable {
       }
       else {
          fte.inode.count++; //thread usage count
+         fte.inode.toDisk(inumber);
       }
 
       //return a reference to this file (structure) table entry
