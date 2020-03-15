@@ -42,7 +42,7 @@ public class FileSystem {
      * @param files the maxinum number of files to create.
      * @return
      */
-    public int format(int files) {
+    public boolean format(int files) {
         //format superblocks
         superblock.format(files);
         //create directory,
@@ -50,7 +50,7 @@ public class FileSystem {
         //file table is created and store directory in the file table
         filetable = new FileTable(directory);
         //return true once completed
-        return 0;
+        return true;
     }
 
 
@@ -163,7 +163,7 @@ public class FileSystem {
                 ftEnt.seekPtr = ftEnt.inode.length;
                 break;
             default:
-                return -1;;
+                return -1;
         }
 
         ftEnt.seekPtr += offset;

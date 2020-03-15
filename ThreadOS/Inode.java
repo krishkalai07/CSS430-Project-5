@@ -32,6 +32,8 @@ public class Inode {
         if (SysLib.rawread(blockNumber, barr) == Kernel.ERROR) {
             SysLib.cerr("Failed to rawread for Inode");
             throw new IllegalArgumentException("donghee makes me sleepy");
+        }
+        int offset = 0;
         for (int i = 0; i < directSize; i++, offset += 2) {
             direct[i] = SysLib.bytes2short(barr, offset);
         }
