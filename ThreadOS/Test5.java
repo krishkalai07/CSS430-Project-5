@@ -197,7 +197,7 @@ class Test5 extends Thread {
     byte[] tmpBuf = new byte[2];
     size = SysLib.read( fd, tmpBuf );
     
-    //
+    // 
     if ( tmpBuf[0] != ( byte )10 ) {
       SysLib.cout( "seek(fd,10,0) contents " + tmpBuf[0] + "(wrong\n" );
       SysLib.close( fd );
@@ -253,19 +253,20 @@ class Test5 extends Thread {
 
     for ( byte i = 0; i < 16; i++ )
       if ( tmpBuf[i] != buf16[i] ) {
-        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong)\n" );
+        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong 1)\n" );
         SysLib.close( fd );
         return false;
       }
     for ( byte i = 16; i < 24; i++ )
       if ( tmpBuf[i] != buf32[i-16] ) {
-        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong)\n" );
+        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong 2)\n" );
         SysLib.close( fd );
         return false;
       }
     for ( byte i = 24; i < 48; i++ )
       if ( tmpBuf[i] != buf24[i-24] ) {
-        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong)\n" );
+        SysLib.cout( "tmpBuf[" + i + "]=" + tmpBuf[i] + " (wrong 3)\n" );
+        SysLib.cout( "it should be " + buf24[i - 24] + "\n" );
         SysLib.close( fd );
         return false;
       }

@@ -109,7 +109,11 @@ public class FileSystem {
         // System.out.println("seekptr bfr: " + ftEnt.seekPtr);
         // System.out.println(java.util.Arrays.toString(readFromDisk));
         // System.out.println(java.util.Arrays.toString(buffer));
+        System.out.println("data before: ");
+        System.out.println(java.util.Arrays.toString(buffer));
         System.arraycopy(readFromDisk, temp, buffer, 0, buffer.length);
+        System.out.println("data after: ");
+        System.out.println(java.util.Arrays.toString(buffer));
         ftEnt.seekPtr += buffer.length;
         // System.out.println("seekptr aft: " + ftEnt.seekPtr);
         // System.out.println(java.util.Arrays.toString(readFromDisk));
@@ -128,6 +132,7 @@ public class FileSystem {
      * @return the size of written contents; -1 if fails writing
      */
     int write(FileTableEntry ftEnt, byte[] buffer) {
+        System.out.println("$$$$Buffer size to write: " + buffer.length);
         System.out.println(java.util.Arrays.toString(buffer));
 
         // Test for availability
@@ -138,7 +143,10 @@ public class FileSystem {
         int prevSeekPtr = ftEnt.seekPtr;
         System.out.println("write::seekPtr = " + prevSeekPtr);
         System.out.println(ftEnt.seekPtr/ 512 + " " + ftEnt.seekPtr % 512);
-        ftEnt.seekPtr += writeByBlocksToDisk(buffer, ftEnt.inode, ftEnt.mode, ftEnt.seekPtr/ 512, ftEnt.seekPtr % 512) - 1;
+        int temp = writeByBlocksToDisk(buffer, ftEnt.inode, ftEnt.mode, ftEnt.seekPtr/ 512, ftEnt.seekPtr % 512) - 1;
+        System.out.println("added: " +temp);
+        System.out.println("write::seekPtr_before = " + ftEnt.seekPtr);
+        ftEnt.seekPtr += temp;
         System.out.println("write::seekPtr_after = " + ftEnt.seekPtr);
         return ftEnt.seekPtr - prevSeekPtr;
 
@@ -164,15 +172,16 @@ public class FileSystem {
         byte[] readFromDisk = new byte[512];
 
         // Use the direct blocks
-    //System.out.println("write::offset = " + offset);
+        System.out.println("write::offset = " + offset + ", buffer Size = " + buffer.length);
         while (pointerIndex < 11 && offset < buffer.length) {
+    
             System.out.println("I have yet to read");
             SysLib.rawread(inode.direct[pointerIndex], readFromDisk);
       //      System.out.println("I can wead");
             takenBlocks.add(inode.direct[pointerIndex]);  
             
             if (bufferIndex >= 512) {
-        //        System.out.println("I entered the bad side");
+               System.out.println("I entered the bad side");
                 // allocate a new block and write to it
                 System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512);
                 bufferIndex += 512;
@@ -181,7 +190,7 @@ public class FileSystem {
                 inode.length += 512;
                 inode.direct[++pointerIndex] = findNextFreeBlock();
             } else {
-                //    System.out.println("The math has yet to begin");\
+                   System.out.println("The math has yet to begin");
                 System.out.println("data before: ");
                 System.out.println(java.util.Arrays.toString(readFromDisk));
                 System.out.println("offset = " + offset);
@@ -190,8 +199,9 @@ public class FileSystem {
                 System.out.println(java.util.Arrays.toString(readFromDisk));
                 //    System.out.println("The math is yummy");
                 bufferIndex += buffer.length; 
-                sum += buffer.length - offset;
-                inode.length += buffer.length - offset;
+                //sum += buffer.length - offset;
+                sum += bufferIndex % 512;
+                inode.length += (buffer.length % 512);
                 offset += buffer.length;
             }
            
@@ -209,8 +219,11 @@ public class FileSystem {
                 inode.indirect = fte.iNumber;   
             }
             Inode next = filetable.inodeFromiNumber(inode.indirect);
+            System.out.println("Right before recursion " + sum);
+
             sum += writeByBlocksToDisk(buffer, next, mode, blockIndex, offset);
         }
+        System.out.println("?!!??!?! HERE?!?!?! " + sum);
         return sum;
     }
 
