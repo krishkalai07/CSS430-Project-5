@@ -2,6 +2,8 @@ public class FileSystem {
     private SuperBlock superblock;
     private Directory directory;
     private FileTable filetable;
+
+    java.util.HashSet<Short> takenBlocks; 
  
     public FileSystem(int diskBlocks) {
        // create superblock, and format disk with 64 inodes in default
@@ -23,6 +25,9 @@ public class FileSystem {
           directory.bytes2directory(dirData);
        }
        close(dirEnt);
+
+       takenBlocks = new java.util.HashSet<>();
+       takenBlocks.add((short)0); // Adds the superblock
     }
  
     //syncs the file system back to the physical disk and write the directory information 
@@ -36,6 +41,8 @@ public class FileSystem {
         //sync superblock
         superblock.sync();
     }
+
+
 
     /**
      * 
@@ -56,7 +63,7 @@ public class FileSystem {
 
 
     FileTableEntry open(String filename, String mode) {
-        System.out.println("open: " + mode);
+        // System.out.println("open: " + mode);
         return filetable.falloc(filename, mode);
     }
 
@@ -64,10 +71,10 @@ public class FileSystem {
         // Closes the file corresponding to fd, commits all file transactions on this file, 
         // and unregisters fd from the user file descriptor table of the calling thread's TCB. 
         // The return value is 0 in success, otherwise -1.
-        //filetable.ffree(ftEnt);
+        // filetable.ffree(ftEnt);
         ftEnt.inode.flag = 0;
         ftEnt.inode.count--;
-        System.out.println("close::seek: " + ftEnt.seekPtr);
+        // System.out.println("close::seek: " + ftEnt.seekPtr);
         return true;
     }
 
@@ -76,38 +83,31 @@ public class FileSystem {
     }
 
     int read(FileTableEntry ftEnt, byte[] buffer) {
-        // System.out.println("p1");
         int temp = ftEnt.seekPtr;
-        // System.out.println("p2");
-        // int index = ftEnt.seekPtr / 512;    // index of a direct/indirect array–
-        // System.out.println("p3");
+        System.out.println("FS::read::seekPtr = " + temp);
         Inode inode = ftEnt.inode;
-        // System.out.println("p4");
+        int directIndex = 0;
         while (temp > 512) {
             short inumber = inode.indirect;
             inode = new Inode(inumber);
             temp = temp / 512;
+            directIndex++;
         }
-        // System.out.println("p5");
-        int blockNumber = temp;
-
+        System.out.println("FS::read::directIndex = " + directIndex);
+        System.out.println("FS::read::direct = " + java.util.Arrays.toString(inode.direct));
         // System.out.println("p6");
         byte[] readFromDisk = new byte[512];
-        // System.out.println("p7");
-        if (SysLib.rawread(inode.direct[blockNumber], readFromDisk) == -1) {
-            System.out.println("the cat stopped working");
+        if (SysLib.rawread(inode.direct[directIndex], readFromDisk) == -1) {
             return -1;
         }
-        // System.out.println("p8");
         // System.out.println("seekptr bfr: " + ftEnt.seekPtr);
-        System.out.println(java.util.Arrays.toString(readFromDisk));
+        // System.out.println(java.util.Arrays.toString(readFromDisk));
         // System.out.println(java.util.Arrays.toString(buffer));
         System.arraycopy(readFromDisk, temp, buffer, 0, buffer.length);
         ftEnt.seekPtr += buffer.length;
         // System.out.println("seekptr aft: " + ftEnt.seekPtr);
-        System.out.println(java.util.Arrays.toString(readFromDisk));
+        // System.out.println(java.util.Arrays.toString(readFromDisk));
         // System.out.println(java.util.Arrays.toString(buffer));
-        // System.out.println("p9");
         return buffer.length;
     }
 
@@ -123,33 +123,65 @@ public class FileSystem {
     int write(FileTableEntry ftEnt, byte[] buffer) {
         byte[] readFromDisk = new byte[512];
 
+        // Test for availability
         if (ftEnt.inode.flag == 0) {
-            System.out.println(ftEnt.count);
-            return 0;
+            return -1;
         }
 
         Inode inode = ftEnt.inode;
-        int blockIndex = ftEnt.seekPtr / 512;
-        if (blockIndex < ftEnt.inode.direct.length) {       // direct
+        // int blockIndex = ftEnt.seekPtr / 512;
+        int temp = ftEnt.seekPtr;
+        int directIndex = 0;
+        while (temp > 512) {
+            short inumber = inode.indirect;
+            inode = new Inode(inumber);
+            temp = temp / 512;
+            directIndex++;
+        }
+        if (directIndex < ftEnt.inode.direct.length) {       // direct
             //System.out.println("first");
+            int bufferIndex = 0;
 
-            int blockNumber = inode.direct[blockIndex];
-            SysLib.rawread(blockNumber, readFromDisk);
-            System.arraycopy(buffer, 0, readFromDisk, ftEnt.seekPtr % 512, buffer.length);  // TODO: assuming that the data does not go out of the block
-            SysLib.rawwrite(blockNumber, readFromDisk);
-            // System.out.println("end");
-            ftEnt.seekPtr += buffer.length;
+            for(;bufferIndex < buffer.length;) {
+                int blockNumber = inode.direct[directIndex];
+                System.out.println("--i am BEFORE rawread--");
+                System.out.println(" direct Index: " + directIndex);
+
+                SysLib.rawread(blockNumber, readFromDisk);
+                System.out.println("i am AFTER rawread");
+
+                takenBlocks.add((short)blockNumber);
+                if (buffer.length >= 512) {
+                    System.out.println("buffer Index: " + bufferIndex + ", seekPtr: " + ftEnt.seekPtr);
+                    
+                    System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512); // changed ftEnt.seekPtr to 0
+                    bufferIndex += 512;
+                    ftEnt.seekPtr += 512;
+                    inode.direct[++directIndex] = findNextFreeBlock();
+                }
+                else {
+                    System.arraycopy(buffer, bufferIndex, readFromDisk, ftEnt.seekPtr, buffer.length);
+                    bufferIndex += buffer.length - bufferIndex;
+                    ftEnt.seekPtr += buffer.length - bufferIndex;
+                }
+                SysLib.rawwrite(blockNumber, readFromDisk);
+            }
             ftEnt.inode.length += buffer.length;
-
-            return buffer.length; //FIXME: No block switch or indirect
-
-        } else {                                            // indirect
-            //TODO: FIXME: hi hi hi
-            System.out.println("hi hi hi");
-
+            return buffer.length;
         }
 
-        return 0;
+        //TODO: indirect
+
+        return -1;
+    }
+
+    private short findNextFreeBlock() {
+        for(short i = 1; i < 1000; i++) {
+            if (!takenBlocks.contains(i)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     boolean delete(String fileName) {
@@ -182,7 +214,7 @@ public class FileSystem {
      * If the user attempts to set the pointer to beyond the file size, you must set the seek pointer to the end of the file. The offset loction of the seek pointer in the file is returned from the call to seek.
      */
     int seek(FileTableEntry ftEnt, int offset, int whence) {
-        System.out.println("sawfwfwfwefef");
+        //System.out.println("sawfwfwfwefef");
 
         switch (whence) {
             case SEEK_SET:
@@ -203,7 +235,7 @@ public class FileSystem {
         } else if (ftEnt.seekPtr > ftEnt.inode.length) {
             ftEnt.seekPtr = ftEnt.inode.length;
         }
-        System.out.println("seek: " + ftEnt.seekPtr);
+        //System.out.println("seek: " + ftEnt.seekPtr);
         return ftEnt.seekPtr;
     }
  }

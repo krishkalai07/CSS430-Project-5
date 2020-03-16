@@ -35,10 +35,10 @@ class Test5 extends Thread {
     if ( test8( ) ) // open "css430" with "w+"
       SysLib.cout("Correct behavior of read/writing a small file.0.5\n");
 
-    // test9( );        // open "bothell" with "w+"
-    // if ( test10( ) ) // write buf[512 * 13]
-    //   SysLib.cout("Correct behavior of writing a lot of bytes....0.5\n");
-    // test11( );       // close fd
+    test9( );        // open "bothell" with "w+"
+    if ( test10( ) ) // write buf[512 * 13]
+      SysLib.cout("Correct behavior of writing a lot of bytes....0.5\n");
+  //  test11( );       // close fd
     // if ( test12( ) ) // read buf[512 * 13] from "bothell"
     //   SysLib.cout("Correct behavior of reading a lot of bytes....0.5\n");
     // if ( test13( ) ) // append buf[32] to "bothell"
@@ -129,7 +129,6 @@ class Test5 extends Thread {
     //.............................................."
     SysLib.cout( "5: reopen and read from \"css430\".." );
     fd = SysLib.open( "css430", "r" );
-    System.out.println("test5::fd " + fd);
     byte[] tmpBuf = new byte[16];
     size = SysLib.read( fd, tmpBuf );
     if ( size != 16 ) {
@@ -294,9 +293,10 @@ class Test5 extends Thread {
   private boolean test10( ) {
     //.............................................."
     SysLib.cout( "10: size = write( fd, buf[6656] )." );
-    for ( int i = 0; i < 6656; i++ )
+    for ( int i = 0; i < 6656; i++ ) 
       buf6656[i] = ( byte )( i % 256 );
     size = SysLib.write( fd, buf6656 );
+    System.out.println("write is wrong here?");
     if ( size != 6656 ) {
       SysLib.cout( "size = " + size + " (wrong)\n" );
       return false;

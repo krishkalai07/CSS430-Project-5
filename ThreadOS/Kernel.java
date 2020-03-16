@@ -181,8 +181,10 @@ public class Kernel
                   }
                   if ((myTcb = scheduler.getMyTcb()) != null) {
                      FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     System.out.println("before If statement");
 
                      if (ftEnt != null) {
+                        System.out.println("ftENT is null");
                         return fs.write(ftEnt, (byte[])args);
                      }
                   }
@@ -210,11 +212,13 @@ public class Kernel
 
                case CLOSE:   // to be implemented in project
                   if ((myTcb = scheduler.getMyTcb()) != null) {
-                     FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     //FileTableEntry ftEnt = myTcb.getFtEnt(param);
+                     FileTableEntry ftEnt = myTcb.returnFd(param);
                      if (ftEnt == null || !fs.close(ftEnt)) {
                         return ERROR;
                      }
-                     System.out.println("kernel::seek: " + ftEnt.seekPtr);
+                     
+                     //System.out.println("kernel::seek: " + ftEnt.seekPtr);
                   }
                   return OK;
 
