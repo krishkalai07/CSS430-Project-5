@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 public class Directory {
    private static int maxChars = 30; // max characters of each file name
 

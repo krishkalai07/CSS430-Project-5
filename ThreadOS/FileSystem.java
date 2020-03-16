@@ -149,12 +149,13 @@ public class FileSystem {
         byte[] readFromDisk = new byte[512];
 
         // Use the direct blocks
-        while (pointerIndex < 11 && bufferIndex < buffer.length) {
+        while (pointerIndex < 10 && bufferIndex < buffer.length) {
             SysLib.rawread(inode.direct[pointerIndex], readFromDisk);
             takenBlocks.add(inode.direct[pointerIndex]);  
-            
-            if (bufferIndex >= 512) {
+            System.out.println("pointer index: " + pointerIndex);
+            if (buffer.length - bufferIndex >= 512) {
                 // allocate a new block and write to it
+                System.out.println("1: bufferIndex = " + bufferIndex + ", " + "length = " + (buffer.length - bufferIndex));
                 System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512);
                 bufferIndex += 512;
                 sum += 512;
@@ -162,6 +163,7 @@ public class FileSystem {
                 inode.length += 512;
                 inode.direct[++pointerIndex] = findNextFreeBlock();
             } else {
+                System.out.println("2: bufferIndex = " + bufferIndex + ", " + "offset = " + offset + ", length = " + (buffer.length - bufferIndex));
                 System.arraycopy(buffer, bufferIndex, readFromDisk, offset, buffer.length - bufferIndex);
 
                 bufferIndex += buffer.length; 
@@ -173,7 +175,7 @@ public class FileSystem {
             SysLib.rawwrite(inode.direct[pointerIndex], readFromDisk);  
             
         } 
-        
+        System.out.println("out of WHILE!");
         // indirect pointer
         if (inode.flag != 2 && bufferIndex < buffer.length && pointerIndex >= 11) {
             // Use the indirect block 

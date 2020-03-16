@@ -25,7 +25,6 @@ public class Inode {
      */
     Inode(short iNumber) {                       // retrieving inode from disk
         int blockNumber = 1 + iNumber / 16;
-        int iNodeIndex = iNumber % 16;
 
         byte[] barr = new byte[512];
 
