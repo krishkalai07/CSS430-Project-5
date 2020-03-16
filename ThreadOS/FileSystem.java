@@ -128,7 +128,7 @@ public class FileSystem {
      * @return the size of written contents; -1 if fails writing
      */
     int write(FileTableEntry ftEnt, byte[] buffer) {
-        // byte[] readFromDisk = new byte[512];
+        System.out.println(java.util.Arrays.toString(buffer));
 
         // Test for availability
         if (ftEnt.inode.flag == 0) {
@@ -138,7 +138,7 @@ public class FileSystem {
         int prevSeekPtr = ftEnt.seekPtr;
         System.out.println("write::seekPtr = " + prevSeekPtr);
         System.out.println(ftEnt.seekPtr/ 512 + " " + ftEnt.seekPtr % 512);
-        ftEnt.seekPtr += writeByBlocksToDisk(buffer, ftEnt.inode, ftEnt.mode, ftEnt.seekPtr/ 512, ftEnt.seekPtr % 512);
+        ftEnt.seekPtr += writeByBlocksToDisk(buffer, ftEnt.inode, ftEnt.mode, ftEnt.seekPtr/ 512, ftEnt.seekPtr % 512) - 1;
         System.out.println("write::seekPtr_after = " + ftEnt.seekPtr);
         return ftEnt.seekPtr - prevSeekPtr;
 
@@ -171,24 +171,32 @@ public class FileSystem {
       //      System.out.println("I can wead");
             takenBlocks.add(inode.direct[pointerIndex]);  
             
-            if (buffer.length >= 512) {
+            if (bufferIndex >= 512) {
         //        System.out.println("I entered the bad side");
                 // allocate a new block and write to it
                 System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512);
                 bufferIndex += 512;
                 sum += 512;
                 offset += 512;
+                inode.length += 512;
                 inode.direct[++pointerIndex] = findNextFreeBlock();
             } else {
-            //    System.out.println("The math has yet to begin");
-                System.arraycopy(buffer, bufferIndex, readFromDisk, offset, buffer.length - offset);
-            //    System.out.println("The math is yummy");
-                bufferIndex += buffer.length - offset; 
+                //    System.out.println("The math has yet to begin");\
+                System.out.println("data before: ");
+                System.out.println(java.util.Arrays.toString(readFromDisk));
+                System.out.println("offset = " + offset);
+                System.arraycopy(buffer, bufferIndex, readFromDisk, offset, buffer.length - bufferIndex);
+                System.out.println("data before: ");
+                System.out.println(java.util.Arrays.toString(readFromDisk));
+                //    System.out.println("The math is yummy");
+                bufferIndex += buffer.length; 
                 sum += buffer.length - offset;
-                offset += buffer.length - offset; //os = os + bl - os 
-                                                  //   = bl
+                inode.length += buffer.length - offset;
+                offset += buffer.length;
             }
+           
             SysLib.rawwrite(inode.direct[pointerIndex], readFromDisk);  
+            
         } 
         
         // indirect pointer

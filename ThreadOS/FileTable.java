@@ -106,7 +106,7 @@ public class FileTable {
    } 
       
    /**
-    * retrieves an Inode given the iNumber
+    * Gets an Inode given the iNumber
     *
     * @param iNumber iNumber of the target iNode
     * @return Inode if found; else null
