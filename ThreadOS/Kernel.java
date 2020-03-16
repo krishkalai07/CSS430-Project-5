@@ -181,10 +181,7 @@ public class Kernel
                   }
                   if ((myTcb = scheduler.getMyTcb()) != null) {
                      FileTableEntry ftEnt = myTcb.getFtEnt(param);
-                     System.out.println("before If statement");
-
                      if (ftEnt != null) {
-                        System.out.println("ftENT is null");
                         return fs.write(ftEnt, (byte[])args);
                      }
                   }
