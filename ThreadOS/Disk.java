@@ -31,71 +31,70 @@ public class Disk extends Thread {
 	buffer = null;
 	currentBlockId = 0;
 	targetBlockId = 0;
-	try {
-	    FileInputStream ifstream = new FileInputStream( "DISK" );
-	    int readableSize = ( ifstream.available( ) < data.length ) ?
-		ifstream.available( ) : data.length; 
-	    ifstream.read( data, 0, readableSize );
-	    ifstream.close( );
-	} catch ( FileNotFoundException e ) {
-	    SysLib.cerr( "threadOS: DISK created\n" );
-	} catch ( IOException e ) {
-	    SysLib.cerr( e.toString( ) + "\n" );
-	}
+		try {
+			FileInputStream ifstream = new FileInputStream( "DISK" );
+			int readableSize = ( ifstream.available( ) < data.length ) ?
+			ifstream.available( ) : data.length; 
+			ifstream.read( data, 0, readableSize );
+			ifstream.close( );
+		} catch ( FileNotFoundException e ) {
+			SysLib.cerr( "threadOS: DISK created\n" );
+		} catch ( IOException e ) {
+			SysLib.cerr( e.toString( ) + "\n" );
+		}
     }
 
     public synchronized boolean read( int blockId, byte buffer[] ) {
+		if ( blockId < 0 || blockId > diskSize ) { 
+			SysLib.cerr( "threadOS: a wrong blockId for read\n" );
+			return false;
+		}
 
-	if ( blockId < 0 || blockId > diskSize ) {
-	    SysLib.cerr( "threadOS: a wrong blockId for read\n" );
-	    return false;
-	}
-
-	if ( command == IDLE && readyBuffer == false ) {
-	    this.buffer = buffer;
-	    targetBlockId = blockId;
-	    command = READ;
-	    notify( );
-	    return true;
-	} else
-	    return false;
+		if ( command == IDLE && readyBuffer == false ) {
+			this.buffer = buffer;
+			targetBlockId = blockId;
+			command = READ;
+			notify( );
+			return true;
+		} else
+			return false;
     }
 
     public synchronized boolean write( int blockId, byte buffer[] ) {
 
-	if ( blockId < 0 || blockId > diskSize ) {
-	    SysLib.cerr( "threadOS: a wrong blockId for write\n" );
-	    return false;
-	}
+		if ( blockId < 0 || blockId > diskSize ) {
+			SysLib.cerr( "threadOS: a wrong blockId for write\n" );
+			return false;
+		}
 
-	if ( command == IDLE && readyBuffer == false ) {
-	    this.buffer = buffer;
-	    targetBlockId = blockId;
-	    command = WRITE;
-	    notify( );
-	    return true;
-	} else
-	    return false;
+		if ( command == IDLE && readyBuffer == false ) {
+			this.buffer = buffer;
+			targetBlockId = blockId;
+			command = WRITE;
+			notify( );
+			return true;
+		} else
+			return false;
     }
 
     public synchronized boolean sync( ) {
 	
-	if ( command == IDLE && readyBuffer == false ) {
-	    command = SYNC;
-	    notify( );
-	    return true;
-	} else
-	    return false;
+		if ( command == IDLE && readyBuffer == false ) {
+			command = SYNC;
+			notify( );
+			return true;
+		} else
+			return false;
     }
 
     public synchronized boolean testAndResetReady( ) {
-	if ( command == IDLE && readyBuffer == true ) 
-        {
-	    readyBuffer = false;
-            SysLib.disk( COND_DISK_REQ );
-	    return true;
-	} else
-	    return false;
+		if ( command == IDLE && readyBuffer == true ) 
+			{
+			readyBuffer = false;
+				SysLib.disk( COND_DISK_REQ );
+			return true;
+		} else
+			return false;
     }
 
     public synchronized boolean testReady( ) {

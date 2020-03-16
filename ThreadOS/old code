@@ -1,0 +1,46 @@
+        // Inode inode = ftEnt.inode;
+        // // int blockIndex = ftEnt.seekPtr / 512;
+        // int temp = ftEnt.seekPtr;
+        // int directIndex = 0;
+        // while (temp > 512) {
+        //     short inumber = inode.indirect;
+        //     inode = new Inode(inumber);
+        //     temp = temp / 512;
+        //     directIndex++;
+        // }
+        // if (directIndex < ftEnt.inode.direct.length) {       // direct
+        //     //System.out.println("first");
+        //     int bufferIndex = 0;
+        //     for(; bufferIndex < buffer.length; ) {
+        //         int blockNumber = inode.direct[directIndex];
+        //         SysLib.rawread(blockNumber, readFromDisk);
+
+        //         takenBlocks.add((short)blockNumber);
+        //         if (buffer.length >= 512) {
+                    
+        //             System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512); // changed ftEnt.seekPtr to 0
+        //             bufferIndex += 512;
+        //             ftEnt.seekPtr += 512;
+        //             inode.direct[++directIndex] = findNextFreeBlock();
+        //         }
+        //         else {
+        //             System.arraycopy(buffer, bufferIndex, readFromDisk, ftEnt.seekPtr, buffer.length);
+        //             bufferIndex += buffer.length - bufferIndex;
+        //             ftEnt.seekPtr += buffer.length - bufferIndex;
+        //         }
+        //         SysLib.rawwrite(blockNumber, readFromDisk);
+        //     }
+        //     // check if we need to use indirect ptr
+        //     if (directIndex > 11) { 
+        //         FileTableEntry fte = filetable.falloc(null, ftEnt.mode);
+        //         inode.indirect = fte.iNumber;     
+                
+        //         // write to the disk the rest of the leftover
+        //     }
+
+        //     ftEnt.inode.length += buffer.length;
+        //     return buffer.length;
+        // }
+        // else {
+            
+        // }

@@ -42,13 +42,10 @@ public class FileSystem {
         superblock.sync();
     }
 
-
-
     /**
      * 
-     * 
      * @param files the maxinum number of files to create.
-     * @return
+     * @return 
      */
     public boolean format(int files) {
         //format superblocks
@@ -78,13 +75,22 @@ public class FileSystem {
         return true;
     }
 
+    /**
+     * @return the size of file in the file table entry
+     */
     int fsize(FileTableEntry ftEnt) {
         return ftEnt.inode.length;
     }
 
+    /**
+     * 
+     * @param ftEnt associated with the file to be read
+     * @param buffer byte[] to read the file into
+     * @return the size of the file read into the buffer; -1 if fails reading
+     */
     int read(FileTableEntry ftEnt, byte[] buffer) {
         int temp = ftEnt.seekPtr;
-        System.out.println("FS::read::seekPtr = " + temp);
+       // System.out.println("FS::read::seekPtr = " + temp);
         Inode inode = ftEnt.inode;
         int directIndex = 0;
         while (temp > 512) {
@@ -93,8 +99,8 @@ public class FileSystem {
             temp = temp / 512;
             directIndex++;
         }
-        System.out.println("FS::read::directIndex = " + directIndex);
-        System.out.println("FS::read::direct = " + java.util.Arrays.toString(inode.direct));
+     //   System.out.println("FS::read::directIndex = " + directIndex);
+     //   System.out.println("FS::read::direct = " + java.util.Arrays.toString(inode.direct));
         // System.out.println("p6");
         byte[] readFromDisk = new byte[512];
         if (SysLib.rawread(inode.direct[directIndex], readFromDisk) == -1) {
@@ -116,65 +122,93 @@ public class FileSystem {
      * the seek pointer. The operation may overwrite existing data in the file and/or append to the end
      * of the file. SysLib.write increments the seek pointer by the number of bytes to have been written.
      * The return value is the number of bytes that have been written, or a negative value upon an error.
-     * @param ftEnt
-     * @param buffer
-     * @return
+     * 
+     * @param ftEnt associated with the file to be written 
+     * @param buffer byte array that contains the contents to be wrriten
+     * @return the size of written contents; -1 if fails writing
      */
     int write(FileTableEntry ftEnt, byte[] buffer) {
-        byte[] readFromDisk = new byte[512];
+        // byte[] readFromDisk = new byte[512];
 
         // Test for availability
         if (ftEnt.inode.flag == 0) {
             return -1;
         }
+        // params:(byte[] buffer, Inode inode, String mode, int blockIndex, int offset)
+        int prevSeekPtr = ftEnt.seekPtr;
+        System.out.println("write::seekPtr = " + prevSeekPtr);
+        System.out.println(ftEnt.seekPtr/ 512 + " " + ftEnt.seekPtr % 512);
+        ftEnt.seekPtr += writeByBlocksToDisk(buffer, ftEnt.inode, ftEnt.mode, ftEnt.seekPtr/ 512, ftEnt.seekPtr % 512);
+        System.out.println("write::seekPtr_after = " + ftEnt.seekPtr);
+        return ftEnt.seekPtr - prevSeekPtr;
 
-        Inode inode = ftEnt.inode;
-        // int blockIndex = ftEnt.seekPtr / 512;
-        int temp = ftEnt.seekPtr;
-        int directIndex = 0;
-        while (temp > 512) {
-            short inumber = inode.indirect;
-            inode = new Inode(inumber);
-            temp = temp / 512;
-            directIndex++;
-        }
-        if (directIndex < ftEnt.inode.direct.length) {       // direct
-            //System.out.println("first");
-            int bufferIndex = 0;
 
-            for(;bufferIndex < buffer.length;) {
-                int blockNumber = inode.direct[directIndex];
-                System.out.println("--i am BEFORE rawread--");
-                System.out.println(" direct Index: " + directIndex);
-
-                SysLib.rawread(blockNumber, readFromDisk);
-                System.out.println("i am AFTER rawread");
-
-                takenBlocks.add((short)blockNumber);
-                if (buffer.length >= 512) {
-                    System.out.println("buffer Index: " + bufferIndex + ", seekPtr: " + ftEnt.seekPtr);
-                    
-                    System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512); // changed ftEnt.seekPtr to 0
-                    bufferIndex += 512;
-                    ftEnt.seekPtr += 512;
-                    inode.direct[++directIndex] = findNextFreeBlock();
-                }
-                else {
-                    System.arraycopy(buffer, bufferIndex, readFromDisk, ftEnt.seekPtr, buffer.length);
-                    bufferIndex += buffer.length - bufferIndex;
-                    ftEnt.seekPtr += buffer.length - bufferIndex;
-                }
-                SysLib.rawwrite(blockNumber, readFromDisk);
-            }
-            ftEnt.inode.length += buffer.length;
-            return buffer.length;
-        }
-
-        //TODO: indirect
-
-        return -1;
     }
 
+    /**
+     * 
+     * @param buffer the data to be written to disk. (full array)
+     * @param inode the inode pointing to the blocks to write to
+     * @param blockIndex the block in inode.direct
+     * @param offset the position in the block specified by blockIndex
+     * 
+     * @return a new seek pointer location
+     * 
+     * @since 1997/06/12
+     */ 
+    private int writeByBlocksToDisk(byte[] buffer, Inode inode, String mode, int blockIndex, int offset) {
+        System.out.println("FileSystem.writeByBlocksToDisk()");
+        int bufferIndex = 0; //the location of the buffer to write
+        int sum = 0;
+        int pointerIndex = 0;
+        byte[] readFromDisk = new byte[512];
+
+        // Use the direct blocks
+    //System.out.println("write::offset = " + offset);
+        while (pointerIndex < 11 && offset < buffer.length) {
+            System.out.println("I have yet to read");
+            SysLib.rawread(inode.direct[pointerIndex], readFromDisk);
+      //      System.out.println("I can wead");
+            takenBlocks.add(inode.direct[pointerIndex]);  
+            
+            if (buffer.length >= 512) {
+        //        System.out.println("I entered the bad side");
+                // allocate a new block and write to it
+                System.arraycopy(buffer, bufferIndex, readFromDisk, 0, 512);
+                bufferIndex += 512;
+                sum += 512;
+                offset += 512;
+                inode.direct[++pointerIndex] = findNextFreeBlock();
+            } else {
+            //    System.out.println("The math has yet to begin");
+                System.arraycopy(buffer, bufferIndex, readFromDisk, offset, buffer.length - offset);
+            //    System.out.println("The math is yummy");
+                bufferIndex += buffer.length - offset; 
+                sum += buffer.length - offset;
+                offset += buffer.length - offset; //os = os + bl - os 
+                                                  //   = bl
+            }
+            SysLib.rawwrite(inode.direct[pointerIndex], readFromDisk);  
+        } 
+        
+        // indirect pointer
+        if (inode.flag != 2 && bufferIndex < buffer.length && pointerIndex >= 11) {
+            // Use the indirect block 
+            if (inode.indirect == -1) {
+                // allocate the new entry and inode
+                FileTableEntry fte = filetable.falloc(null, mode);
+                fte.inode.flag = 2;
+                inode.indirect = fte.iNumber;   
+            }
+            Inode next = filetable.inodeFromiNumber(inode.indirect);
+            sum += writeByBlocksToDisk(buffer, next, mode, blockIndex, offset);
+        }
+        return sum;
+    }
+
+    /** 
+     * @return the next free block number; returns -1 if there is no free block
+     */
     private short findNextFreeBlock() {
         for(short i = 1; i < 1000; i++) {
             if (!takenBlocks.contains(i)) {
@@ -184,6 +218,11 @@ public class FileSystem {
         return -1;
     }
 
+    /**
+     * 
+     * @param fileName to be deleted
+     * @return true if it is closed and can be deleted; returns false otherwise
+     */
     boolean delete(String fileName) {
         short inumber = directory.namei(fileName);
         Inode inode = new Inode(inumber);
@@ -199,22 +238,27 @@ public class FileSystem {
         return filetable.ffree(inumber);
     }
  
-    private final int SEEK_SET = 0;
-    private final int SEEK_CUR = 1;
-    private final int SEEK_END = 2;
- 
     /**
      * Updates the seek pointer corresponding to fd as follows:
      *
      * If whence is SEEK_SET (= 0), the file's seek pointer is set to offset bytes from the beginning of the file
      * If whence is SEEK_CUR (= 1), the file's seek pointer is set to its current value plus the offset. The offset can be positive or negative.
      * If whence is SEEK_END (= 2), the file's seek pointer is set to the size of the file plus the offset. The offset can be positive or negative.
-     *
+     */
+    private final int SEEK_SET = 0;
+    private final int SEEK_CUR = 1;
+    private final int SEEK_END = 2;
+ 
+    /** 
      * If the user attempts to set the seek pointer to a negative number you must clamp it to zero.
      * If the user attempts to set the pointer to beyond the file size, you must set the seek pointer to the end of the file. The offset loction of the seek pointer in the file is returned from the call to seek.
+     * 
+     * @param ftEnt
+     * @param offset
+     * @param whence
+     * @return
      */
     int seek(FileTableEntry ftEnt, int offset, int whence) {
-        //System.out.println("sawfwfwfwefef");
 
         switch (whence) {
             case SEEK_SET:
@@ -235,7 +279,6 @@ public class FileSystem {
         } else if (ftEnt.seekPtr > ftEnt.inode.length) {
             ftEnt.seekPtr = ftEnt.inode.length;
         }
-        //System.out.println("seek: " + ftEnt.seekPtr);
         return ftEnt.seekPtr;
     }
  }

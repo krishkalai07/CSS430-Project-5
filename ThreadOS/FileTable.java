@@ -29,7 +29,7 @@ public class FileTable {
          //System.out.println("i am creating the file");
          //System.out.println("kittens want to see this");
          // allocate a new file (structure) table entry for this file name
-         inumber = dir.ialloc(filename);     // FIXME: make use of free list
+         inumber = dir.ialloc(filename);
          Inode inode = new Inode(inumber);
          inode.flag = 1;
          fte = new FileTableEntry(inode, inumber, mode);
@@ -66,14 +66,12 @@ public class FileTable {
    }
 
    /**
-    * 
+    * saves the corresponding inode to the disk and free this file table entry.
+    *
     * @param e a file table entry reference to be freed
     * @return true if it has been freed successfully
     */
    public synchronized boolean ffree(FileTableEntry fte) {
-      //save the corresponding inode to the disk
-      //free this file table entry.
-      //return true if this file table entry found in my table
       for (int i = 0; i < table.size(); i++) {
          if (table.get(i).iNumber == fte.iNumber) {
             fte.inode.toDisk(fte.iNumber);
@@ -85,11 +83,13 @@ public class FileTable {
       return false;
    }
 
+   /**
+    * saves the corresponding inode to the disk and free this file table entry.
+    * 
+    * @param iNumber of the iNode associate withthe file table entry
+    * @return true if this file table entry found in my table
+    */
    public synchronized boolean ffree(short iNumber) {
-      //save the corresponding inode to the disk
-      //free this file table entry.
-      //return true if this file table entry found in my table
-      
       for (int i = 0; i < table.size(); i++) {
          if (table.get(i).iNumber == iNumber) {
             table.get(i).inode.toDisk(iNumber);
@@ -100,7 +100,23 @@ public class FileTable {
       return false;
    }
 
+   // returns wheter the table is empty
    public synchronized boolean fempty( ) {
-      return table.isEmpty( );  //return if table is empty 
-   }                            //should be called before starting a format
+      return table.isEmpty( );  
+   } 
+      
+   /**
+    * retrieves an Inode given the iNumber
+    *
+    * @param iNumber iNumber of the target iNode
+    * @return Inode if found; else null
+    */
+   public Inode inodeFromiNumber(int iNumber) { 
+      for(FileTableEntry fte: table) {
+         if (fte.iNumber == iNumber) {
+            return fte.inode;
+         }
+      }
+      return null;
+   }
 }
