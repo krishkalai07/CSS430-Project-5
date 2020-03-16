@@ -35,10 +35,10 @@ class Test5 extends Thread {
     if ( test8( ) ) // open "css430" with "w+"
       SysLib.cout("Correct behavior of read/writing a small file.0.5\n");
 
-    // test9( );        // open "bothell" with "w+"
-    // if ( test10( ) ) // write buf[512 * 13]
-    //   SysLib.cout("Correct behavior of writing a lot of bytes....0.5\n");
-  //  test11( );       // close fd
+    test9( );        // open "bothell" with "w+"
+    if ( test10( ) ) // write buf[512 * 13]
+      SysLib.cout("Correct behavior of writing a lot of bytes....0.5\n");
+   test11( );       // close fd
     // if ( test12( ) ) // read buf[512 * 13] from "bothell"
     //   SysLib.cout("Correct behavior of reading a lot of bytes....0.5\n");
     // if ( test13( ) ) // append buf[32] to "bothell"
